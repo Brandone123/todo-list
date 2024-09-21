@@ -8,22 +8,34 @@
                     <v-btn color="primary" @click="openDialog">Add Task</v-btn>
                 </v-toolbar>
             </template>
+            <!-- Formatage des dates dans le tableau -->
+            <template v-slot:item.created_at="{ item }">
+                {{ formatDate(item.created_at) }}
+            </template>
+            <template v-slot:item.updated_at="{ item }">
+                {{ formatDate(item.updated_at) }}
+            </template>
             <template v-slot:item.actions="{ item }">
-                <v-btn small @click="editTask(item)" v-if="canEdit(item)">Edit</v-btn>
-                <v-btn small @click="deleteTask(item.id)" v-if="canDelete(item)">Delete</v-btn>
+                <v-icon color="blue" @click="editTask(item)" v-if="canEdit(item)">mdi-pencil</v-icon>
+                <v-icon color="red" @click="deleteTask(item.id)" v-if="canDelete(item)">mdi-delete</v-icon>
             </template>
         </v-data-table>
 
         <v-dialog v-model="dialog" max-width="600px">
             <v-card>
-                <v-card-title>
-                    <span>{{ isEditing ? 'Edit Task' : 'Add Task' }}</span>
-                </v-card-title>
+                <v-toolbar color="primary" dark>
+                    <v-toolbar-title>{{ isEditing ? 'Edit Task' : 'Add Task' }}</v-toolbar-title>
+                    <v-spacer></v-spacer>
+                    <v-btn icon @click="closeDialog">
+                        <v-icon>mdi-close</v-icon>
+                    </v-btn>
+                </v-toolbar>
                 <v-card-text>
-                    <v-text-field v-model="taskData.title" label="Title" required />
-                    <v-text-field v-model="taskData.description" label="Description" required />
-                    <v-select v-model="taskData.status" :items="statusOptions" label="Status" required />
+                    <v-text-field v-model="taskData.title" label="Title" required density="compact" variant="outlined"/>
+                    <v-select v-model="taskData.status" :items="statusOptions" label="Status" required density="compact" variant="outlined"/>
+                    <v-textarea v-model="taskData.description" label="Description" required density="compact" variant="outlined"/>
                 </v-card-text>
+                <v-divider></v-divider>
                 <v-card-actions>
                     <v-btn color="blue darken-1" @click="closeDialog">Cancel</v-btn>
                     <v-btn color="blue darken-1" @click="saveTask">{{ isEditing ? 'Update' : 'Add' }}</v-btn>
@@ -40,12 +52,27 @@ import { useStore } from 'vuex';
 const store = useStore(); 
 
 const advanceHeaders = [
-    { title: 'Date', value: 'updated_at' },
+    { title: 'ID', value: 'id' },
+    { title: 'Created at', value: 'created_at' },
+    { title: 'Updated at', value: 'updated_at' },
     { title: 'Title', value: 'title' },
     { title: 'Description', value: 'description' },
     { title: 'Status', value: 'status' },
     { title: 'Actions', value: 'actions' },
 ];
+
+// Fonction pour formater la date en un format lisible
+function formatDate(dateString: string) {
+    const date = new Date(dateString);
+    return date.toLocaleString('fr-FR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    });
+}
 
 const tasks = computed(() => store.state.tasks);  
 const dialog = ref(false);
@@ -57,27 +84,22 @@ const taskData = ref({
 });
 const statusOptions = ['Pending', 'In Progress', 'Completed'];
 
-// Utilisateur connecté (supposons que l'ID de l'utilisateur soit récupéré du store ou d'une autre source)
-const currentUser = computed(() => store.state.currentUser); // Assurez-vous que cet utilisateur soit bien défini dans le store
+const currentUser = computed(() => store.state.currentUser); 
 
-// Filtrer les tâches pour ne montrer que celles associées à l'utilisateur connecté
 const filteredTasks = computed(() => {
     return tasks.value.filter((task: any) => task.user_id === currentUser.value.id);
 });
 
-// Vérifie si l'utilisateur peut éditer une tâche
 function canEdit(task: any) {
     return task.user_id === currentUser.value.id;
 }
 
-// Vérifie si l'utilisateur peut supprimer une tâche
 function canDelete(task: any) {
     return task.user_id === currentUser.value.id;
 }
 
-// Fetch tasks when component is mounted
 onMounted(async () => {
-    await store.dispatch('fetchCurrentUser');  // Récupérer l'utilisateur connecté
+    await store.dispatch('fetchCurrentUser');
     await store.dispatch('fetchTasks');
 });
 

@@ -26,6 +26,8 @@ import {
     VTextField,
     VSelect,
     VDataTable,
+    VTextarea,
+    VDivider
 } from 'vuetify/components';
 
 const vuetify = createVuetify({
@@ -45,6 +47,8 @@ const vuetify = createVuetify({
         VTextField,
         VSelect,
         VDataTable,
+        VTextarea,
+        VDivider
     },
 });
 

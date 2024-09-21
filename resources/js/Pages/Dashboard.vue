@@ -1,22 +1,35 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
 import Task from '/resources/js/Components/TaskApp.vue'
+import { useStore } from 'vuex'; 
+import { ref, computed, onMounted } from 'vue';
 
-// Exemples de données, remplace par tes données réelles
-const totalTasks = ref(25);
-const pendingTasks = ref(10);
-const completedTasks = ref(15);
+// Utiliser Vuex Store pour récupérer les tâches
+const store = useStore();
+
+// Récupérer les tâches depuis le store
+onMounted(async () => {
+    await store.dispatch('fetchTasks');  // Si tu as une action dans ton store pour récupérer les tâches
+});
+
+// Calcul des tâches dynamiquement
+const totalTasks = computed(() => store.state.tasks.length);
+
+const pendingTasks = computed(() => 
+    store.state.tasks.filter(task => task.status === 'Pending').length
+);
+
+const completedTasks = computed(() => 
+    store.state.tasks.filter(task => task.status === 'Completed').length
+);
+
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Overview" />
 
     <AuthenticatedLayout>
-        <!-- <template #header>
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Dashboard</h2>
-        </template> -->
 
         <div class="py-12">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -60,7 +73,7 @@ const completedTasks = ref(15);
             </div>
         </div>
 
-        <div class="py-12">
+        <div>
             <Task />
         </div>
     </AuthenticatedLayout>
