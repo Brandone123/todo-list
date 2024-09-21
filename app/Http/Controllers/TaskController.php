@@ -11,7 +11,8 @@ class TaskController extends Controller
     // Liste toutes les tâches de l'utilisateur connecté
     public function index()
     {
-        $tasks = Auth::user()->tasks;
+        // Récupère les tâches de l'utilisateur connecté
+        $tasks = Task::where('user_id', Auth::id())->get();
         return response()->json($tasks);
     }
 
@@ -26,7 +27,7 @@ class TaskController extends Controller
         $task = new Task();
         $task->title = $request->title;
         $task->description = $request->description;
-        $task->user_id = Auth::id();
+        $task->user_id = Auth::id();  // Associe la tâche à l'utilisateur connecté
         $task->save();
 
         return response()->json($task, 201);
@@ -35,6 +36,7 @@ class TaskController extends Controller
     // Affiche une tâche spécifique
     public function show(Task $task)
     {
+        // Autorise seulement l'affichage si l'utilisateur en est propriétaire
         $this->authorize('view', $task);
         return response()->json($task);
     }
@@ -42,14 +44,16 @@ class TaskController extends Controller
     // Met à jour une tâche existante
     public function update(Request $request, Task $task)
     {
+        // Vérifie si l'utilisateur a le droit de modifier cette tâche
         $this->authorize('update', $task);
 
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'status' => 'Pending',
+            'status' => 'required|string|in:Pending,In Progress,Completed',
         ]);
 
+        // Met à jour les champs demandés
         $task->update($request->only(['title', 'description', 'status']));
 
         return response()->json($task);
@@ -58,6 +62,7 @@ class TaskController extends Controller
     // Supprime une tâche
     public function destroy(Task $task)
     {
+        // Autorise seulement la suppression si l'utilisateur en est propriétaire
         $this->authorize('delete', $task);
         $task->delete();
 

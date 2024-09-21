@@ -60,4 +60,9 @@ class ProfileController extends Controller
 
         return Redirect::to('/');
     }
+
+    public function currentUser()
+    {
+        return response()->json(Auth::user());
+    }
 }
